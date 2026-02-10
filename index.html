@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Fiorino • Estoque</title>
+  <style>
+    :root{
+      --bg:#0b0d12; --card:#111523; --card2:#0f1320; --bd:#1e2740; --bd2:#273252;
+      --txt:#e9eefc; --muted:#a9b4d6; --accent:#3b82f6; --danger:#ef4444;
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .app{max-width:980px;margin:0 auto;min-height:100svh;display:flex;flex-direction:column}
+    header{
+      position:sticky;top:0;z-index:10;
+      padding:14px 16px calc(10px + env(safe-area-inset-top));
+      background:linear-gradient(180deg, rgba(17,21,35,.98), rgba(11,13,18,.85));
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--bd);
+    }
+    header .title{font-weight:900;font-size:16px;letter-spacing:.2px}
+    header .sub{margin-top:4px;font-size:12px;color:var(--muted)}
+    main{flex:1;padding:14px 14px 86px} /* espaço pra navbar */
+    .card{
+      background:var(--card);border:1px solid var(--bd);border-radius:var(--r);
+      padding:14px;box-shadow:0 10px 28px rgba(0,0,0,.25)
+    }
+    .stack{display:grid;gap:12px}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input[type="text"], input[type="date"], textarea, select{
+      width:100%;border-radius:14px;border:1px solid var(--bd2);
+      background:var(--card2);color:var(--txt);padding:12px 12px;outline:none;
+      font-size:15px;
+    }
+    textarea{min-height:150px;resize:vertical;line-height:1.35}
+    input[type="file"]{width:100%;font-size:14px;color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:160px}
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{
+      border:1px solid var(--bd2);background:#162044;color:var(--txt);
+      padding:12px 14px;border-radius:14px;font-weight:800;font-size:14px;
+      cursor:pointer
+    }
+    button.secondary{background:var(--card2)}
+    button.danger{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
+      background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);font-size:12px;color:#cfe0ff}
+    .preview{
+      display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;
+      border:1px dashed var(--bd2);background:var(--card2)
+    }
+    .preview img{width:120px;height:96px;object-fit:cover;border-radius:12px;border:1px solid var(--bd2)}
+    .meta{font-size:12px;color:var(--muted)}
+    .tabs{
+      position:fixed;left:0;right:0;bottom:0;z-index:20;
+      padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(11,13,18,.92);
+      backdrop-filter: blur(12px);
+      border-top:1px solid var(--bd);
+    }
+    .tabbar{max-width:980px;margin:0 auto;display:flex;gap:10px}
+    .tab{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:10px;border-radius:14px;border:1px solid var(--bd2);background:var(--card2);
+      color:var(--muted);font-weight:800;font-size:12px
+    }
+    .tab.active{background:#162044;color:var(--txt);border-color:rgba(59,130,246,.45)}
+    .hide{display:none}
+    .list{display:grid;gap:12px}
+    .item{
+      border:1px solid var(--bd);background:var(--card2);border-radius:16px;padding:12px;
+      display:flex;gap:12px;flex-wrap:wrap
+    }
+    .item img{width:132px;height:104px;object-fit:cover;border-radius:12px;border:1px solid var(--bd2)}
+    .item .content{flex:1;min-width:220px}
+    .item .title{font-weight:900;margin:0 0 6px;font-size:14px}
+    .item .time{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .item pre{
+      margin:0;white-space:pre-wrap;word-break:break-word;
+      background:#0b0d12;border:1px solid var(--bd);border-radius:14px;padding:10px;
+      color:#dbe4ff;font-size:13px;line-height:1.35
+    }
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .divider{height:1px;background:var(--bd);margin:10px 0}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">📦 Fiorino • Registro de Estoque</div>
+      <div class="sub">Offline • salva no navegador • 2 abas (Registrar / Registros)</div>
+    </header>
+
+    <main>
+      <!-- ABA: REGISTRAR -->
+      <section id="view-register" class="stack">
+        <div class="card">
+          <div class="row">
+            <div>
+              <label for="who">Qual Fiorino?</label>
+              <select id="who">
+                <option value="INGRID">Fiorino INGRID</option>
+                <option value="VITOR">Fiorino VITOR</option>
+                <option value="CD">CD / Estoque Geral</option>
+              </select>
+            </div>
+            <div>
+              <label for="title">Título (opcional)</label>
+              <input id="title" type="text" placeholder="Ex.: manhã / final do dia" maxlength="80" />
+            </div>
+          </div>
+
+          <label for="photo">Foto (câmera/galeria)</label>
+          <input id="photo" type="file" accept="image/*" capture="environment" />
+
+          <div id="previewBox" class="preview hide">
+            <img id="previewImg" alt="Prévia" />
+            <div>
+              <div class="meta" id="previewMeta"></div>
+              <div class="small">Escreve o relatório com caixas/unidades, do jeito que você confere na rotina.</div>
+            </div>
+          </div>
+
+          <label for="notes">Relatório de estoque</label>
+          <textarea id="notes" placeholder="Ex.: 45g - 12 caixas / 90g - 6 caixas / ..."></textarea>
+
+          <div class="btnrow">
+            <button id="saveBtn" disabled>Salvar registro</button>
+            <button id="resetBtn" class="secondary" type="button">Limpar</button>
+            <span class="pill" id="statusPill">0 registros</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <button id="exportAllBtn" class="secondary">Exportar backup (.json)</button>
+            <label style="margin:0;flex:1;">
+              <input id="importFile" type="file" accept="application/json" style="display:none;">
+              <button id="importBtn" class="secondary" type="button" style="width:100%;">Importar backup (.json)</button>
+            </label>
+            <button id="clearAllBtn" class="danger">Apagar tudo</button>
+          </div>
+          <div class="small" style="margin-top:10px;">
+            Dica: exporta de vez em quando pra não perder se limpar cache/formatar.
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA: REGISTROS -->
+      <section id="view-list" class="stack hide">
+        <div class="card">
+          <div class="row">
+            <div>
+              <label for="filterWho">Filtrar por</label>
+              <select id="filterWho">
+                <option value="">Todas</option>
+                <option value="INGRID">Fiorino INGRID</option>
+                <option value="VITOR">Fiorino VITOR</option>
+                <option value="CD">CD / Estoque Geral</option>
+              </select>
+            </div>
+            <div>
+              <label for="q">Buscar (título/texto)</label>
+              <input id="q" type="text" placeholder="Ex.: 45g, churrasco, manhã..." />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="from">De (data)</label>
+              <input id="from" type="date" />
+            </div>
+            <div>
+              <label for="to">Até (data)</label>
+              <input id="to" type="date" />
+            </div>
+          </div>
+
+          <div class="btnrow">
+            <button id="applyBtn">Aplicar filtros</button>
+            <button id="clearFiltersBtn" class="secondary">Limpar filtros</button>
+            <span class="pill" id="countPill">0 encontrados</span>
+          </div>
+        </div>
+
+        <div class="list" id="list"></div>
+      </section>
+    </main>
+
+    <!-- NAVBAR -->
+    <nav class="tabs">
+      <div class="tabbar">
+        <button id="tabRegister" class="tab active" type="button">✍️ Registrar</button>
+        <button id="tabList" class="tab" type="button">📚 Registros</button>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    // ===== IndexedDB =====
+    const DB_NAME = "fiorino_estoque_db_v2";
+    const DB_VER  = 1;
+    const STORE   = "registros";
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORE)) {
+            const store = db.createObjectStore(STORE, { keyPath: "id" });
+            store.createIndex("createdAt", "createdAt");
+            store.createIndex("who", "who");
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function addRecord(rec) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        tx.objectStore(STORE).add(rec);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function getAllRecords() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readonly");
+        const req = tx.objectStore(STORE).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function deleteRecord(id) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        tx.objectStore(STORE).delete(id);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function clearAll() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        tx.objectStore(STORE).clear();
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    // ===== Utils =====
+    const $ = (id) => document.getElementById(id);
+
+    function fmtDate(ts){
+      const d = new Date(ts);
+      return d.toLocaleString("pt-BR");
+    }
+
+    function startOfDay(ts){
+      const d = new Date(ts);
+      d.setHours(0,0,0,0);
+      return d.getTime();
+    }
+    function endOfDay(ts){
+      const d = new Date(ts);
+      d.setHours(23,59,59,999);
+      return d.getTime();
+    }
+
+    function downloadBlob(blob, filename){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    }
+
+    function blobToBase64(blob){
+      return new Promise((resolve, reject)=>{
+        const r = new FileReader();
+        r.onload = ()=>resolve(r.result.split(",")[1]);
+        r.onerror = ()=>reject(r.error);
+        r.readAsDataURL(blob);
+      });
+    }
+
+    function base64ToBlob(base64, mime){
+      const bin = atob(base64);
+      const bytes = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return new Blob([bytes], {type:mime});
+    }
+
+    async function recordToExportable(rec){
+      return {
+        id: rec.id,
+        createdAt: rec.createdAt,
+        who: rec.who,
+        title: rec.title,
+        notes: rec.notes,
+        imageName: rec.imageName,
+        imageType: rec.imageType,
+        imageBase64: await blobToBase64(rec.imageBlob),
+      };
+    }
+
+    // ===== State / Elements =====
+    const viewRegister = $("view-register");
+    const viewList = $("view-list");
+    const tabRegister = $("tabRegister");
+    const tabList = $("tabList");
+
+    const who = $("who");
+    const title = $("title");
+    const photo = $("photo");
+    const notes = $("notes");
+    const saveBtn = $("saveBtn");
+    const resetBtn = $("resetBtn");
+    const statusPill = $("statusPill");
+
+    const previewBox = $("previewBox");
+    const previewImg = $("previewImg");
+    const previewMeta = $("previewMeta");
+
+    const filterWho = $("filterWho");
+    const q = $("q");
+    const from = $("from");
+    const to = $("to");
+    const applyBtn = $("applyBtn");
+    const clearFiltersBtn = $("clearFiltersBtn");
+    const countPill = $("countPill");
+    const list = $("list");
+
+    const exportAllBtn = $("exportAllBtn");
+    const importBtn = $("importBtn");
+    const importFile = $("importFile");
+    const clearAllBtn = $("clearAllBtn");
+
+    let selectedBlob=null, selectedName=null, selectedMime=null;
+
+    function setTab(which){
+      const isReg = which==="register";
+      viewRegister.classList.toggle("hide", !isReg);
+      viewList.classList.toggle("hide", isReg);
+      tabRegister.classList.toggle("active", isReg);
+      tabList.classList.toggle("active", !isReg);
+      if(!isReg) renderList(); // sempre atualiza ao abrir
+    }
+
+    tabRegister.addEventListener("click", ()=>setTab("register"));
+    tabList.addEventListener("click", ()=>setTab("list"));
+
+    function setSaveEnabled(){
+      const hasPhoto = !!selectedBlob;
+      const hasText = notes.value.trim().length>0;
+      saveBtn.disabled = !(hasPhoto && hasText);
+    }
+
+    notes.addEventListener("input", setSaveEnabled);
+
+    photo.addEventListener("change", (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if(!file){
+        selectedBlob=null; selectedName=null; selectedMime=null;
+        previewBox.classList.add("hide");
+        setSaveEnabled();
+        return;
+      }
+      selectedBlob = file;
+      selectedName = file.name || "foto.jpg";
+      selectedMime = file.type || "image/jpeg";
+
+      const url = URL.createObjectURL(file);
+      previewImg.src = url;
+      previewMeta.textContent = `Arquivo: ${selectedName} • ${Math.round(file.size/1024)} KB`;
+      previewBox.classList.remove("hide");
+      previewImg.onload = ()=>URL.revokeObjectURL(url);
+
+      setSaveEnabled();
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      who.value="INGRID";
+      title.value="";
+      notes.value="";
+      photo.value="";
+      selectedBlob=null; selectedName=null; selectedMime=null;
+      previewBox.classList.add("hide");
+      setSaveEnabled();
+    });
+
+    saveBtn.addEventListener("click", async ()=>{
+      try{
+        const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2);
+        const rec = {
+          id,
+          createdAt: Date.now(),
+          who: who.value,
+          title: title.value.trim(),
+          notes: notes.value.trim(),
+          imageBlob: selectedBlob,
+          imageName: selectedName,
+          imageType: selectedMime
+        };
+        await addRecord(rec);
+        resetBtn.click();
+        await refreshCounts();
+        // manda pra aba registros pra já ver que salvou (padrão mobile bom)
+        setTab("list");
+      }catch(err){
+        alert("Erro ao salvar: "+(err?.message||err));
+      }
+    });
+
+    // ===== Filters / List =====
+    function normalizeStr(s){ return (s||"").toLowerCase(); }
+
+    function applyFilters(records){
+      const whoV = filterWho.value;
+      const qV = normalizeStr(q.value.trim());
+      const fromV = from.value ? startOfDay(new Date(from.value).getTime()) : null;
+      const toV = to.value ? endOfDay(new Date(to.value).getTime()) : null;
+
+      return records.filter(r=>{
+        if(whoV && r.who !== whoV) return false;
+        if(fromV !== null && r.createdAt < fromV) return false;
+        if(toV !== null && r.createdAt > toV) return false;
+
+        if(qV){
+          const hay = normalizeStr(`${r.title||""} ${r.notes||""} ${r.who||""}`);
+          if(!hay.includes(qV)) return false;
+        }
+        return true;
+      });
+    }
+
+    async function renderList(){
+      const all = await getAllRecords();
+      all.sort((a,b)=>b.createdAt-a.createdAt);
+
+      const filtered = applyFilters(all);
+      countPill.textContent = `${filtered.length} encontrados`;
+
+      list.innerHTML="";
+      if(filtered.length===0){
+        list.innerHTML = `<div class="card"><div class="small">Nada encontrado. Ajusta os filtros ali em cima 👆</div></div>`;
+        return;
+      }
+
+      for(const rec of filtered){
+        const wrap = document.createElement("div");
+        wrap.className="item";
+
+        const img = document.createElement("img");
+        const imgUrl = URL.createObjectURL(rec.imageBlob);
+        img.src = imgUrl;
+        img.alt = "Foto do estoque";
+        img.onload = ()=>URL.revokeObjectURL(imgUrl);
+
+        const content = document.createElement("div");
+        content.className="content";
+
+        const t = rec.title?.trim() ? rec.title.trim() : "Registro";
+        const titleEl = document.createElement("div");
+        titleEl.className="title";
+        titleEl.textContent = `${t} • ${rec.who}`;
+
+        const timeEl = document.createElement("div");
+        timeEl.className="time";
+        timeEl.textContent = fmtDate(rec.createdAt);
+
+        const pre = document.createElement("pre");
+        pre.textContent = rec.notes;
+
+        const actions = document.createElement("div");
+        actions.className="actions";
+
+        const btnImg = document.createElement("button");
+        btnImg.className="secondary";
+        btnImg.textContent="Baixar imagem";
+        btnImg.onclick=()=>{
+          const ext = (rec.imageName && rec.imageName.includes(".")) ? rec.imageName.split(".").pop() : "jpg";
+          downloadBlob(rec.imageBlob, `foto_${rec.who}_${rec.createdAt}.${ext}`);
+        };
+
+        const btnTxt = document.createElement("button");
+        btnTxt.className="secondary";
+        btnTxt.textContent="Baixar .txt";
+        btnTxt.onclick=()=>{
+          const blob = new Blob([rec.notes], {type:"text/plain;charset=utf-8"});
+          downloadBlob(blob, `relatorio_${rec.who}_${rec.createdAt}.txt`);
+        };
+
+        const btnOne = document.createElement("button");
+        btnOne.className="secondary";
+        btnOne.textContent="Exportar item";
+        btnOne.onclick=async ()=>{
+          const json = await recordToExportable(rec);
+          const blob = new Blob([JSON.stringify(json,null,2)], {type:"application/json"});
+          downloadBlob(blob, `registro_${rec.who}_${rec.createdAt}.json`);
+        };
+
+        const btnDel = document.createElement("button");
+        btnDel.className="danger";
+        btnDel.textContent="Excluir";
+        btnDel.onclick=async ()=>{
+          if(!confirm("Excluir esse registro?")) return;
+          await deleteRecord(rec.id);
+          await refreshCounts();
+          await renderList();
+        };
+
+        actions.append(btnImg, btnTxt, btnOne, btnDel);
+        content.append(titleEl, timeEl, pre, actions);
+
+        wrap.append(img, content);
+        list.appendChild(wrap);
+      }
+    }
+
+    applyBtn.addEventListener("click", renderList);
+
+    clearFiltersBtn.addEventListener("click", ()=>{
+      filterWho.value="";
+      q.value="";
+      from.value="";
+      to.value="";
+      renderList();
+    });
+
+    // ===== Backup / Restore =====
+    exportAllBtn.addEventListener("click", async ()=>{
+      const all = await getAllRecords();
+      if(!all.length){ alert("Não tem nada pra exportar ainda."); return; }
+      const out=[];
+      for(const r of all) out.push(await recordToExportable(r));
+      const blob = new Blob([JSON.stringify({exportedAt:Date.now(), records:out}, null, 2)], {type:"application/json"});
+      downloadBlob(blob, `backup_fiorino_${Date.now()}.json`);
+    });
+
+    importBtn.addEventListener("click", ()=>importFile.click());
+
+    importFile.addEventListener("change", async (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      try{
+        const data = JSON.parse(await file.text());
+        const records = Array.isArray(data.records) ? data.records : (Array.isArray(data) ? data : []);
+        if(!records.length){ alert("Arquivo não parece ter registros."); return; }
+
+        for(const r of records){
+          const imgBlob = base64ToBlob(r.imageBase64, r.imageType || "image/jpeg");
+          const rec = {
+            id: r.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()),
+            createdAt: r.createdAt || Date.now(),
+            who: r.who || "INGRID",
+            title: r.title || "",
+            notes: r.notes || "",
+            imageBlob: imgBlob,
+            imageName: r.imageName || "foto.jpg",
+            imageType: r.imageType || "image/jpeg"
+          };
+          try{ await addRecord(rec); }
+          catch{ rec.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()); await addRecord(rec); }
+        }
+
+        alert("Importado com sucesso!");
+        importFile.value="";
+        await refreshCounts();
+        setTab("list");
+      }catch(err){
+        alert("Erro ao importar: "+(err?.message||err));
+      }
+    });
+
+    clearAllBtn.addEventListener("click", async ()=>{
+      if(!confirm("Apagar TODOS os registros salvos neste navegador?")) return;
+      await clearAll();
+      await refreshCounts();
+      await renderList();
+    });
+
+    async function refreshCounts(){
+      const all = await getAllRecords();
+      statusPill.textContent = `${all.length} registros`;
+      countPill.textContent = `${all.length} encontrados`;
+    }
+
+    // init
+    (async ()=>{
+      await refreshCounts();
+      setTab("register");
+    })().catch(()=>{});
+  </script>
+</body>
+</html>
